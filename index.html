@@ -1,11 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gustos Musicales</title>
+  <meta charset="UTF-8">
+  <title>Análisis de Gustos Musicales</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .grupo {
+      margin-bottom: 8px;
+    }
+    input[type=number] {
+      width: 60px;
+    }
+    .resultado {
+      background: #f4f4f4;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
-    
+
+    <h1>Calificá estas bandas del 1 al 10</h1>
+
+    <form id="formBandas">
+        <div class="grupo">Los Enanitos Verdes: <input type="number" name="Los Enanitos Verdes" min="0" max="10" required></div>
+        <div class="grupo">Pimpinela: <input type="number" name="Pimpinela" min="0" max="10" required></div>
+        <div class="grupo">System Of A Down: <input type="number" name="System Of A Down" min="0" max="10" required></div>
+        <div class="grupo">Gorillaz: <input type="number" name="Gorillaz" min="0" max="10" required></div>
+        <div class="grupo">Cuarteto de Nos: <input type="number" name="Cuarteto de Nos" min="0" max="10" required></div>
+        <div class="grupo">Plan B: <input type="number" name="Plan B" min="0" max="10" required></div>
+        <br>
+        <button type="submit">Procesar Información</button>
+    </form>
+
+    <div class="resultado" id="resultado"></div>
+
+    <script>
+        document.getElementById("formBandas").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const bandas = [
+            "Los Enanitos Verdes",
+            "Pimpinela",
+            "System Of A Down",
+            "Gorillaz",
+            "Cuarteto de Nos",
+            "Plan B"
+        ];
+
+        const features = [
+            "Rock",
+            "Alternativo",
+            "Latino",
+            "Balada",
+            "Electrónica",
+            "Urbano"
+        ];
+
+        // Matriz de características de cada banda (6 bandas x 6 géneros)
+        const band_feats = tf.tensor([
+            [1, 0, 1, 0, 0, 0], // Los Enanitos Verdes: Rock + Latino
+            [0, 0, 0, 1, 0, 0], // Pimpinela: Balada
+            [1, 1, 0, 0, 0, 0], // SOAD: Rock + Alternativo
+            [0, 1, 0, 0, 1, 0], // Gorillaz: Alternativo + Electrónica
+            [1, 1, 0, 0, 0, 0], // Cuarteto de Nos: Rock + Alternativo
+            [0, 0, 0, 0, 0, 1]  // Plan B: Urbano
+        ]);
+
+        const form = new FormData(e.target);
+        const calificaciones = bandas.map(b => parseFloat(form.get(b)));
+        const user_votes = tf.tensor2d([calificaciones]); // 1 x 6
+
+        const user_feats = tf.matMul(user_votes, band_feats); // 1 x 6
+        const top = tf.topk(user_feats, features.length);
+        const indices = top.indices.arraySync()[0];
+
+        const resultado = document.getElementById("resultado");
+        let html = "<h2>Tus géneros favoritos:</h2><ol>";
+        indices.forEach(i => {
+                html += `<li>${features[i]}</li>`;
+            });
+            html += "</ol>";
+            resultado.innerHTML = html;
+
+            user_votes.dispose();
+            band_feats.dispose();
+            user_feats.dispose();
+        });
+    </script>
+
 </body>
 </html>
